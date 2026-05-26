@@ -1,0 +1,12 @@
+# secrets
+.env
+
+# generated media — too large for git
+output/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
