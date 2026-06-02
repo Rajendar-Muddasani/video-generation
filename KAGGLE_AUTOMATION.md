@@ -27,6 +27,42 @@ Why:
 - the same storage layer also works later from Colab or a rented GPU
 - each job can live under `jobs/<job-id>/...` without changing the manifest model
 
+## Hugging Face Prerequisites
+
+Before Step 2 or Step 3, all of these must be true:
+
+1. You have a real Hugging Face access token, not another provider key.
+2. The token has permission to read and write dataset repos.
+3. The `repo_id` uses a Hugging Face namespace that actually exists for your account or HF organization.
+4. Step 2 completes successfully at least once, so the dataset repo and `jobs/<job-id>/input/` bundle exist before Kaggle tries to download them.
+
+Important:
+
+- Your GitHub organization name does not automatically become a Hugging Face namespace.
+- If your Hugging Face profile is `https://huggingface.co/rajendarmuddasani`, then the safe default namespace is `rajendarmuddasani/...`.
+- If you want an organization namespace on Hugging Face, create that HF organization first and make sure your token can access it.
+- A valid Hugging Face token typically starts with `hf_`.
+
+Quick local token check:
+
+```bash
+source .venv/bin/activate
+pip install -r requirements-orchestration.txt
+python - <<'PY'
+import os
+from huggingface_hub import HfApi
+
+token = os.environ.get("HF_TOKEN")
+if not token:
+  raise SystemExit("HF_TOKEN is not set")
+
+api = HfApi(token=token)
+print(api.whoami())
+PY
+```
+
+If that fails, do not continue to Kaggle yet.
+
 ## Install Local Orchestration Dependencies
 
 ```bash
@@ -50,6 +86,8 @@ Set your Hugging Face token locally first:
 export HF_TOKEN=hf_your_token_here
 ```
 
+That must be on one line. Do not split it into `export HF_TOKEN` and a second line with the value.
+
 Do not commit the token into the repo or leave a real token in this document.
 
 Then publish the manifest plus source stills:
@@ -58,10 +96,19 @@ Then publish the manifest plus source stills:
 python orchestration/publish_job_bundle.py \
   jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml \
   --repo-id yourname/bedtime-story-jobs \
-  --private
+  --private \
+  --force
 ```
 
 If the token has permission to create dataset repos, this step creates the Hugging Face dataset repo automatically when it does not already exist.
+
+This step is not successful unless you see a line like:
+
+```text
+[bundle] uploaded to <repo-id>:jobs/<job-id>/input
+```
+
+If you only see the staging-directory error, Kaggle will still fail because nothing was uploaded yet.
 
 That uploads a portable input bundle to:
 
@@ -104,11 +151,25 @@ REPO_ID = "yourname/bedtime-story-jobs"
 JOB_ID = "the-deer-and-the-firefly-path__bedtime-lowcost-v1"
 ```
 
+Use the exact same `REPO_ID` that succeeded in Step 2. Do not switch namespaces between local publish and Kaggle.
+
 Cell 2: install the small bootstrap dependencies.
 
 ```python
 !pip install -q huggingface-hub pyyaml
 ```
+
+Optional sanity check cell:
+
+```python
+from huggingface_hub import HfApi
+
+api = HfApi(token=os.environ["HF_TOKEN"])
+print(api.whoami())
+print(api.repo_info(repo_id=REPO_ID, repo_type="dataset"))
+```
+
+If this cell fails with `401` or `RepositoryNotFoundError`, the problem is still on the Hugging Face side: wrong token, wrong namespace, missing repo, or missing permissions.
 
 Cell 3: download the staged bundle into the notebook working directory.
 
