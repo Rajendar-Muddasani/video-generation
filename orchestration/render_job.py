@@ -153,6 +153,8 @@ def parse_torch_dtype(name: str):
 
 
 def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload: bool):
+    import torch
+
     try:
         from diffusers import LTXImageToVideoPipeline
     except ImportError as exc:
@@ -160,7 +162,16 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
             "❌  Missing self-hosted video dependencies. Install requirements-selfhosted.txt and a GPU torch build first."
         ) from exc
 
-    dtype = parse_torch_dtype(dtype_name)
+    resolved_dtype_name = dtype_name
+    if device.startswith("cuda") and dtype_name == "bfloat16":
+        if not torch.cuda.is_available():
+            raise SystemExit("❌  Requested CUDA rendering, but torch.cuda is not available on this worker.")
+        is_bf16_supported = getattr(torch.cuda, "is_bf16_supported", None)
+        if callable(is_bf16_supported) and not is_bf16_supported():
+            print("[warn] CUDA device does not support bfloat16; falling back to float16")
+            resolved_dtype_name = "float16"
+
+    dtype = parse_torch_dtype(resolved_dtype_name)
     pipe = LTXImageToVideoPipeline.from_pretrained(model_name, torch_dtype=dtype)
     if cpu_offload:
         pipe.enable_model_cpu_offload()

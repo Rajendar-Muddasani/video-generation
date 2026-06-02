@@ -103,8 +103,8 @@ commands:
   assemble:
     en: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang en
     te: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang te
-  publish_bundle: python orchestration/publish_job_bundle.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --repo-id dummy/local
-  kaggle_worker: python orchestration/kaggle_worker.py --repo-id dummy/local --job-id the-deer-and-the-firefly-path__bedtime-lowcost-v1 --install-deps
+  publish_bundle: python orchestration/publish_job_bundle.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --repo-id rajendarmuddasani/video-generation-jobs --private
+  kaggle_worker: python orchestration/kaggle_worker.py --repo-id rajendarmuddasani/video-generation-jobs --job-id the-deer-and-the-firefly-path__bedtime-lowcost-v1 --install-deps
   sync_results: python orchestration/sync_job_results.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
 summary:
   total_slides: 10
@@ -363,9 +363,9 @@ run_history:
   selected_slides: all
 storage:
   provider: hf-dataset
-  repo_id: dummy/local
+  repo_id: rajendarmuddasani/video-generation-jobs
   job_root: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1
   input_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/input
   state_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/state
   results_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/results
-  published_at: '2026-06-01T13:19:30+00:00'
+  published_at: '2026-06-02T17:14:54+00:00'

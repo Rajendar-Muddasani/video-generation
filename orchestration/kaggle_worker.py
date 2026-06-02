@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import yaml
@@ -17,6 +19,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from orchestration.hf_storage import download_tree, has_files, hf_token, job_remote_layout, upload_file, upload_folder
+
+
+VIDEO_SUFFIXES = (".mp4", ".mov", ".mkv", ".webm")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,6 +79,62 @@ def maybe_install_deps(workdir: Path) -> None:
             subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", str(req_path)], check=True)
 
 
+def running_on_kaggle() -> bool:
+    return Path("/kaggle/working").exists()
+
+
+def iter_ready_clip_paths(manifest: dict, workdir: Path):
+    for slide in manifest.get("slides", []):
+        for shot in slide.get("shots", []):
+            clip = shot.get("clip", {})
+            rel_path = clip.get("path")
+            if not rel_path or clip.get("status") != "ready":
+                continue
+            clip_path = Path(rel_path)
+            if not clip_path.is_absolute():
+                clip_path = workdir / clip_path
+            if clip_path.is_file() and clip_path.suffix.lower() in VIDEO_SUFFIXES:
+                yield str(rel_path), clip_path
+
+
+def upload_progress(repo_id: str, remote: dict[str, str], token: str | None,
+                    workdir: Path, manifest_rel: str, progress_state: dict) -> None:
+    manifest_path = workdir / manifest_rel
+    if not manifest_path.exists():
+        return
+
+    manifest_mtime_ns = manifest_path.stat().st_mtime_ns
+    if progress_state.get("manifest_mtime_ns") == manifest_mtime_ns:
+        return
+
+    try:
+        manifest = load_yaml(manifest_path)
+    except Exception:
+        return
+
+    upload_file(
+        manifest_path,
+        repo_id=repo_id,
+        remote_path=f"{remote['state_prefix']}/{manifest_rel}",
+        token=token,
+        commit_message=f"Update manifest progress for {remote['job_root'].split('/')[-1]}",
+    )
+    progress_state["manifest_mtime_ns"] = manifest_mtime_ns
+
+    uploaded_clip_rel_paths = progress_state.setdefault("uploaded_clip_rel_paths", set())
+    for rel_path, clip_path in iter_ready_clip_paths(manifest, workdir):
+        if rel_path in uploaded_clip_rel_paths:
+            continue
+        upload_file(
+            clip_path,
+            repo_id=repo_id,
+            remote_path=f"{remote['results_prefix']}/{rel_path}",
+            token=token,
+            commit_message=f"Upload rendered clip {Path(rel_path).name} for {remote['job_root'].split('/')[-1]}",
+        )
+        uploaded_clip_rel_paths.add(rel_path)
+
+
 def selected_slides_arg(bundle_meta: dict, explicit_slides: str | None) -> str | None:
     if explicit_slides:
         return explicit_slides
@@ -100,7 +161,12 @@ def build_render_command(workdir: Path, manifest_rel: str, args, bundle_meta: di
         command.extend(["--device", args.device])
     if args.dtype:
         command.extend(["--dtype", args.dtype])
-    if args.cpu_offload:
+    auto_cpu_offload = (
+        running_on_kaggle()
+        and not args.status_only
+        and (args.device is None or args.device.startswith("cuda"))
+    )
+    if args.cpu_offload or auto_cpu_offload:
         command.append("--cpu-offload")
     return command
 
@@ -181,11 +247,28 @@ def main() -> None:
         maybe_install_deps(workdir)
 
     command = build_render_command(workdir, manifest_rel, args, bundle_meta)
+    if running_on_kaggle() and not args.cpu_offload and not args.status_only:
+        print("[info] Kaggle worker enabling --cpu-offload automatically for LTX compatibility")
     print(f"[run] {' '.join(command)}")
     exit_code = 0
+    progress_state = {
+        "manifest_mtime_ns": None,
+        "uploaded_clip_rel_paths": set(),
+    }
     try:
-        result = subprocess.run(command, cwd=workdir)
-        exit_code = result.returncode
+        env = os.environ.copy()
+        env.setdefault("PYTHONUNBUFFERED", "1")
+        process = subprocess.Popen(command, cwd=workdir, env=env)
+        while True:
+            exit_code = process.poll()
+            if exit_code is not None:
+                break
+            if not args.skip_upload:
+                try:
+                    upload_progress(args.repo_id, remote, token, workdir, manifest_rel, progress_state)
+                except Exception as exc:
+                    print(f"[warn] incremental upload skipped: {exc}")
+            time.sleep(20)
     finally:
         manifest = load_yaml(workdir / manifest_rel)
         if args.outbox_dir:

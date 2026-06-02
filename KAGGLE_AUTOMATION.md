@@ -63,7 +63,7 @@ PY
 
 If that fails, do not continue to Kaggle yet.
 
-These orchestration scripts do not auto-load `.env`. They only read exported environment variables like `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` from the current shell.
+Local orchestration scripts now auto-load the repo `.env` when available. They accept `HF_TOKEN`, `HUGGINGFACE_HUB_TOKEN`, or `HF_KEY` for local Hugging Face operations.
 
 ## Install Local Orchestration Dependencies
 
@@ -88,6 +88,8 @@ Set your Hugging Face token locally first:
 export HF_TOKEN=hf_your_token_here
 ```
 
+If you already keep the token in the repo `.env`, local orchestration scripts can also read `HF_KEY=...` or `HF_TOKEN=...` from there.
+
 That must be on one line. Do not split it into `export HF_TOKEN` and a second line with the value.
 
 Do not commit the token into the repo or leave a real token in this document.
@@ -103,6 +105,8 @@ python orchestration/publish_job_bundle.py \
 ```
 
 If the token has permission to create dataset repos, this step creates the Hugging Face dataset repo automatically when it does not already exist.
+
+If you change any bundled runtime file like `orchestration/render_job.py` or `orchestration/kaggle_worker.py`, rerun Step 2 with `--force` before retrying Kaggle so the updated worker code is uploaded into `jobs/<job-id>/input/`.
 
 This step is not successful unless you see a line like:
 
@@ -219,6 +223,10 @@ subprocess.run(
   check=True,
 )
 ```
+
+If you are retrying an older already-published bundle on Kaggle, the quickest compatibility override is to append `"--dtype", "float16"` to that command. If the GPU still runs out of memory, try `"--cpu-offload"` or test only one slide first with `"--slides", "1"`.
+
+During long Kaggle renders, the worker now uploads the refreshed manifest and any finished clip files incrementally, so `python orchestration/sync_job_results.py jobs/<job>.yaml` can show partial progress before the full render finishes.
 
 If you prefer fewer cells, combine Cells 2-4 into one notebook cell:
 

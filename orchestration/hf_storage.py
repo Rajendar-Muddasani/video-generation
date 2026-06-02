@@ -7,9 +7,24 @@ import os
 import shutil
 from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if load_dotenv is not None:
+    load_dotenv(REPO_ROOT / ".env")
+
 
 def hf_token(explicit_token: str | None = None) -> str | None:
-    return explicit_token or os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+    return (
+        explicit_token
+        or os.environ.get("HF_TOKEN")
+        or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+        or os.environ.get("HF_KEY")
+    )
 
 
 def require_hf():
