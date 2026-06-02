@@ -63,6 +63,8 @@ PY
 
 If that fails, do not continue to Kaggle yet.
 
+These orchestration scripts do not auto-load `.env`. They only read exported environment variables like `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` from the current shell.
+
 ## Install Local Orchestration Dependencies
 
 ```bash
