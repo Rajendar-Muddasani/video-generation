@@ -1,0 +1,12 @@
+S.No. | Story Title | Status | Source | Notes
+--- | --- | --- | --- | ---
+1 | The Clever Crow | Done | stories/clever_crow.py | Legacy Python story; generated output was cleaned because it is old/reproducible.
+2 | The Moon That Forgot to Shine | Done | stories/the-moon-that-forgot-to-shine.yaml | Current bilingual YAML story; English 5-shot Wan animated final is kept in output.
+3 | The Fireflies' Path Home | Done | stories/the-fireflies-path-home.yaml | English and modern Telugu Wan-I2V 720p hybrid finals rebuilt and decode-validated. Separate recreated paused/held-frame finals also exist with `_hybrid-hold` filenames.
+4 | The Deer and the Firefly Path | Done | stories/the-deer-and-the-firefly-path.yaml | Real-quality cute animated animal finals generated in English and modern Telugu with Fal FLUX source images and Wan-I2V 720p clips. Both finals decode-validated; rejected prototype and moon-artifact attempts are quarantined in output.
+5 | The River That Learned to Listen | Done | stories/the-river-that-learned-to-listen.yaml | English 5-shot Wan animated final generated and decode-validated: output/the-river-that-learned-to-listen/final_the-river-that-learned-to-listen_en_animated_wan-25-preview-text-to-video_text_480p_5s_5shots.mp4
+6 | The Little Lamp in the Rain | Open | Backlog idea | A small lamp keeps glowing through rain and teaches steady courage.
+7 | The Cloud Who Shared Its Shadow | Open | Backlog idea | A warm cloud learns generosity by giving shade to tired travelers and animals.
+8 | The Mango Seed's Big Dream | Open | Backlog idea | A tiny seed waits patiently and grows into a tree that shelters everyone.
+9 | The Turtle Who Waited for Sunrise | Open | Backlog idea | A turtle learns that slow steps still reach beautiful mornings.
+10 | The Firefly's Quiet Promise | Open | Backlog idea | A shy firefly discovers that even a small light can comfort a dark path.

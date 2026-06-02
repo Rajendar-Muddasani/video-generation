@@ -1,0 +1,10 @@
+# Install torch separately for the CUDA runtime on your GPU host.
+diffusers>=0.38.0
+transformers>=4.46.0
+accelerate>=1.1.0
+safetensors>=0.4.5
+huggingface-hub>=0.26.0
+sentencepiece>=0.2.0
+peft>=0.13.0
+imageio[ffmpeg]>=2.36.0
+opencv-python-headless>=4.10.0.84

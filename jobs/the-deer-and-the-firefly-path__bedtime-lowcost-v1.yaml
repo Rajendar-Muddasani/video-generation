@@ -1,0 +1,371 @@
+schema_version: 1
+job_id: the-deer-and-the-firefly-path__bedtime-lowcost-v1
+manifest_path: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
+created_at: '2026-06-01T12:55:18+00:00'
+story:
+  path: stories/the-deer-and-the-firefly-path.yaml
+  story_id: the-deer-and-the-firefly-path
+  title_en: The Deer and the Firefly Path
+  title_te: జింక, కుందేలు, మిణుగురుల దారి
+  slide_count: 10
+profile:
+  path: profiles/bedtime-lowcost-v1.yaml
+  profile_id: bedtime-lowcost-v1
+  display_name: Bedtime Low Cost v1
+  genre: bedtime
+  description: Budget-first 10-slide bedtime profile for reusable bilingual EN/TE stories with one short LTX clip per slide.
+plan:
+  video_mode: animated
+  languages:
+  - en
+  - te
+  status:
+    planner: complete
+    source_images: complete
+    clips: pending
+    assembly: pending
+    validation: pending
+paths:
+  source_image_dir: output/the-deer-and-the-firefly-path
+  shot_dir: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips
+  final_dir: output/the-deer-and-the-firefly-path
+source_images:
+  provider: existing
+  dir_template: output/{story_id}
+  naming_contract: slide01_shot01_raw.jpg
+animation:
+  provider: local
+  backend: ltx-diffusers
+  model: Lightricks/LTX-Video
+  generate_script: scripts/generate_ltx_shots.py
+  worker_args:
+    width: 704
+    height: 480
+    fps: 24
+    seconds: 4
+    steps: 8
+    guidance_scale: 1.0
+    dtype: bfloat16
+    device: cuda
+    cpu_offload: false
+    seed: 42
+    negative_prompt: worst quality, blurry, jittery, distorted, flicker
+  merged_defaults:
+    provider: local
+    model: Lightricks/LTX-Video
+    shot_duration_seconds: 4
+    shots_per_slide: 1
+    negative_prompt: blur, distort, low quality, flicker, jitter, warped anatomy, extra limbs, text, watermark
+    cfg_scale: 0.5
+    aspect_ratio: '16:9'
+    resolution: 480p
+    enable_prompt_expansion: true
+    enable_safety_checker: true
+    max_estimated_cost_usd: 5.0
+    model_input: image
+    frames_per_second: 24
+    estimated_cost_per_video: 0.0
+    segment_strategy: hybrid_loop
+    estimated_cost_per_second: null
+assembly:
+  script: generate_story.py
+  driver_script: orchestration/assemble_job.py
+  reuse_shots_across_languages: true
+  commands:
+    en: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang en
+    te: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang te
+outputs:
+  finals:
+    en:
+      path: output/the-deer-and-the-firefly-path/final_the-deer-and-the-firefly-path_en_animated_lightricks-ltx-video_image_480p_4s_1shots.mp4
+      status: missing
+      validation_status: pending
+      assembled_at: '2026-06-01T12:55:19+00:00'
+    te:
+      path: output/the-deer-and-the-firefly-path/final_the-deer-and-the-firefly-path_te_animated_lightricks-ltx-video_image_480p_4s_1shots.mp4
+      status: missing
+      validation_status: pending
+budget:
+  target_cost_usd: 5.0
+  max_gpu_hours: 2.0
+  retry_slide_limit: 2
+  notes: Reuse the same clips for EN and TE. Reject weak stills before motion generation.
+quality_control:
+  inspect_source_stills_before_motion: true
+  inspect_contact_sheet_after_motion: true
+  validate_final_mp4: true
+  notes: Calm bedtime pacing is more important than aggressive motion.
+commands:
+  generate_clips: python orchestration/render_job.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
+  generate_clips_raw: python scripts/generate_ltx_shots.py stories/the-deer-and-the-firefly-path.yaml --image-dir output/the-deer-and-the-firefly-path --output-dir selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips --model Lightricks/LTX-Video --dtype bfloat16 --device cuda --width 704 --height 480 --fps 24 --seconds 4 --steps 8 --guidance-scale 1.0 --negative-prompt 'worst quality, blurry, jittery, distorted, flicker' --seed 42
+  dry_run_en: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang en --dry-run
+  assemble_job: python orchestration/assemble_job.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
+  assemble:
+    en: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang en
+    te: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang te
+  publish_bundle: python orchestration/publish_job_bundle.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --repo-id dummy/local
+  kaggle_worker: python orchestration/kaggle_worker.py --repo-id dummy/local --job-id the-deer-and-the-firefly-path__bedtime-lowcost-v1 --install-deps
+  sync_results: python orchestration/sync_job_results.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
+summary:
+  total_slides: 10
+  total_shots: 10
+  total_clip_seconds: 40
+  existing_source_images: 10
+  missing_source_images: 0
+  existing_clips: 0
+  missing_clips: 10
+slides:
+- slide_index: 1
+  slide_tag: slide01
+  title_en: The New Moon Night
+  title_te: అమావాస్య రాత్రి
+  eyebrow: ''
+  scene_prompt: 'Single deer-only opening scene before the deer meets anyone: exactly one gentle young doe with soft brown fur and kind eyes walking alone on a quiet forest path, a small bush rustling beside the path, no rabbit, no bunny, no second animal anywhere in the frame, dense tree branches and leaves fully covering the sky area, no moon, no moonlight disk, no bright round sky object, warm fireflies glowing as the only lights, cinematic children''s animated movie still, no text or letters.'
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide01_shot01
+    duration_seconds: 4
+    image_prompt: 'Single deer-only opening scene before the deer meets anyone: exactly one gentle young doe with soft brown fur and kind eyes walking alone on a quiet forest path, a small bush rustling beside the path, no rabbit, no bunny, no second animal anywhere in the frame, dense tree branches and leaves fully covering the sky area, no moon, no moonlight disk, no bright round sky object, warm fireflies glowing as the only lights, cinematic children''s animated movie still, no text or letters., wide establishing composition, cinematic depth, layered foreground and background'
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide01_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide01_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 2
+  slide_tag: slide02
+  title_en: The Baby Rabbit Is Lost
+  title_te: చిన్న కుందేలు దారి తప్పింది
+  eyebrow: ''
+  scene_prompt: 'First meeting scene: tiny fluffy baby rabbit with worried expressive eyes sitting under soft leaves near a forest bush while a cute realistic deer bends kindly toward her for the first time, dark moonless forest with dense leafy canopy covering the entire sky area, no moon, no circular light in the sky, warm golden fireflies as the only lights, gentle safe bedtime mood, no text or letters.'
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide02_shot01
+    duration_seconds: 4
+    image_prompt: 'First meeting scene: tiny fluffy baby rabbit with worried expressive eyes sitting under soft leaves near a forest bush while a cute realistic deer bends kindly toward her for the first time, dark moonless forest with dense leafy canopy covering the entire sky area, no moon, no circular light in the sky, warm golden fireflies as the only lights, gentle safe bedtime mood, no text or letters., wide establishing composition, cinematic depth, layered foreground and background'
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide02_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide02_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 3
+  slide_tag: slide03
+  title_en: A Promise on the Path
+  title_te: జింక ఇచ్చిన మాట
+  eyebrow: ''
+  scene_prompt: Cute realistic deer standing protectively beside the tiny baby rabbit on a narrow forest path, soft brown fur, fluffy rabbit fur, moonless dark forest, dense tree canopy and branches blocking the sky, no moon, no glowing disk or round object above the trees, warm firefly dots in the distance, calm hopeful animated film still, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide03_shot01
+    duration_seconds: 4
+    image_prompt: Cute realistic deer standing protectively beside the tiny baby rabbit on a narrow forest path, soft brown fur, fluffy rabbit fur, moonless dark forest, dense tree canopy and branches blocking the sky, no moon, no glowing disk or round object above the trees, warm firefly dots in the distance, calm hopeful animated film still, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide03_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide03_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 4
+  slide_tag: slide04
+  title_en: The Fireflies Gather
+  title_te: మిణుగురులు వచ్చాయి
+  eyebrow: ''
+  scene_prompt: Many warm golden fireflies gathering around a cute realistic deer and tiny baby rabbit in a dark Indian forest, glowing dots forming a soft trail, gentle magical bedtime atmosphere, cinematic depth, moonless sky hidden behind tree branches, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide04_shot01
+    duration_seconds: 4
+    image_prompt: Many warm golden fireflies gathering around a cute realistic deer and tiny baby rabbit in a dark Indian forest, glowing dots forming a soft trail, gentle magical bedtime atmosphere, cinematic depth, moonless sky hidden behind tree branches, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide04_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide04_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 5
+  slide_tag: slide05
+  title_en: Across the Little Stream
+  title_te: చిన్న వాగు దాటారు
+  eyebrow: ''
+  scene_prompt: Cute realistic deer helping a tiny fluffy baby rabbit cross a shallow sparkling stream in a moonless dark forest, fireflies glowing over the water like golden dots, safe gentle movement, premium children's animated movie still, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide05_shot01
+    duration_seconds: 4
+    image_prompt: Cute realistic deer helping a tiny fluffy baby rabbit cross a shallow sparkling stream in a moonless dark forest, fireflies glowing over the water like golden dots, safe gentle movement, premium children's animated movie still, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide05_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide05_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 6
+  slide_tag: slide06
+  title_en: The Tall Grass Whispers
+  title_te: పొడవైన గడ్డి శబ్దం
+  eyebrow: ''
+  scene_prompt: Tall soft grass moving in a gentle night breeze, tiny fluffy baby rabbit staying close beside a kind cute realistic deer, fireflies lighting a narrow safe path, old tree shapes and dense leafy canopy in background, calm moonless forest, no moon, no circular sky light, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide06_shot01
+    duration_seconds: 4
+    image_prompt: Tall soft grass moving in a gentle night breeze, tiny fluffy baby rabbit staying close beside a kind cute realistic deer, fireflies lighting a narrow safe path, old tree shapes and dense leafy canopy in background, calm moonless forest, no moon, no circular sky light, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide06_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide06_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 7
+  slide_tag: slide07
+  title_en: The Owl Near the Banyan Tree
+  title_te: మర్రిచెట్టు దగ్గర గుడ్లగూబ
+  eyebrow: ''
+  scene_prompt: Friendly owl sitting on an old banyan tree branch, cute realistic deer and tiny fluffy baby rabbit below, fireflies glowing around hanging roots, dark blue moonless forest with the sky fully hidden by leaves and branches, no moon, no glowing disk behind the owl, reassuring cinematic bedtime mood, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide07_shot01
+    duration_seconds: 4
+    image_prompt: Friendly owl sitting on an old banyan tree branch, cute realistic deer and tiny fluffy baby rabbit below, fireflies glowing around hanging roots, dark blue moonless forest with the sky fully hidden by leaves and branches, no moon, no glowing disk behind the owl, reassuring cinematic bedtime mood, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide07_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide07_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 8
+  slide_tag: slide08
+  title_en: Mommy's Voice
+  title_te: అమ్మ స్వరం వినిపించింది
+  eyebrow: ''
+  scene_prompt: Tiny fluffy baby rabbit and cute realistic deer following brighter fireflies toward a cozy burrow near small red forest flowers, loving mother rabbit visible in the distance, dense leafy canopy overhead with no visible sky opening, no moon, no bright circular object, warm safe glow in dark forest, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide08_shot01
+    duration_seconds: 4
+    image_prompt: Tiny fluffy baby rabbit and cute realistic deer following brighter fireflies toward a cozy burrow near small red forest flowers, loving mother rabbit visible in the distance, dense leafy canopy overhead with no visible sky opening, no moon, no bright circular object, warm safe glow in dark forest, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide08_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide08_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 9
+  slide_tag: slide09
+  title_en: Thank You, Little Lights
+  title_te: చిన్న వెలుగులకు ధన్యవాదాలు
+  eyebrow: ''
+  scene_prompt: Loving mother rabbit hugging the tiny baby rabbit near a cozy burrow, cute realistic deer standing kindly nearby, fireflies glowing proudly around them, dark moonless forest feeling safe and peaceful, premium animated movie still, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide09_shot01
+    duration_seconds: 4
+    image_prompt: Loving mother rabbit hugging the tiny baby rabbit near a cozy burrow, cute realistic deer standing kindly nearby, fireflies glowing proudly around them, dark moonless forest feeling safe and peaceful, premium animated movie still, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide09_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide09_shot01.mp4
+      status: missing
+      qc: pending
+- slide_index: 10
+  slide_tag: slide10
+  title_en: Goodnight, Little One
+  title_te: శుభరాత్రి చిన్నారి
+  eyebrow: ''
+  scene_prompt: Peaceful moonless forest at bedtime, mother rabbit and baby rabbit resting near cozy burrow, cute realistic deer walking home, dense tree canopy filling the upper frame, no moon, no planet, no bright circular light in the sky, fireflies glowing like tiny stars, soft cinematic goodnight atmosphere, no text or letters.
+  narration_languages:
+  - en
+  - te
+  shots:
+  - shot_index: 1
+    shot_tag: slide10_shot01
+    duration_seconds: 4
+    image_prompt: Peaceful moonless forest at bedtime, mother rabbit and baby rabbit resting near cozy burrow, cute realistic deer walking home, dense tree canopy filling the upper frame, no moon, no planet, no bright circular light in the sky, fireflies glowing like tiny stars, soft cinematic goodnight atmosphere, no text or letters., wide establishing composition, cinematic depth, layered foreground and background
+    motion_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    video_prompt: gentle cinematic push-in, subtle cloud drift, soft environmental motion, calm bedtime pacing
+    source_image:
+      path: output/the-deer-and-the-firefly-path/slide10_shot01_raw.jpg
+      status: ready
+    clip:
+      path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide10_shot01.mp4
+      status: missing
+      qc: pending
+run_history:
+- stage: assemble_job
+  finished_at: '2026-06-01T12:55:19+00:00'
+  languages:
+  - en
+  dry_run: true
+  validate: false
+- stage: render_job_status_only
+  finished_at: '2026-06-01T12:55:35+00:00'
+  selected_slides: all
+- stage: render_job_status_only
+  finished_at: '2026-06-01T13:17:06+00:00'
+  selected_slides: all
+- stage: render_job_status_only
+  finished_at: '2026-06-01T13:19:30+00:00'
+  selected_slides: all
+storage:
+  provider: hf-dataset
+  repo_id: dummy/local
+  job_root: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1
+  input_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/input
+  state_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/state
+  results_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/results
+  published_at: '2026-06-01T13:19:30+00:00'

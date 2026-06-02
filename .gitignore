@@ -3,6 +3,8 @@
 
 # generated media — too large for git
 output/
+selfhosted/
+.job-bundles/
 
 # Python
 .venv/

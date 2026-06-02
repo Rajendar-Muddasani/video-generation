@@ -1,0 +1,57 @@
+profile_id: bedtime-lowcost-v1
+display_name: Bedtime Low Cost v1
+genre: bedtime
+description: Budget-first 10-slide bedtime profile for reusable bilingual EN/TE stories with one short LTX clip per slide.
+plan:
+  video_mode: animated
+  languages:
+    - en
+    - te
+source_images:
+  provider: existing
+  dir_template: output/{story_id}
+  naming_contract: slide01_shot01_raw.jpg
+animation:
+  provider: local
+  backend: ltx-diffusers
+  model: Lightricks/LTX-Video
+  generate_script: scripts/generate_ltx_shots.py
+  output_dir_template: selfhosted/{story_id}/{profile_id}/clips
+  defaults_override:
+    provider: local
+    model: Lightricks/LTX-Video
+    model_input: image
+    shot_duration_seconds: 4
+    shots_per_slide: 1
+    aspect_ratio: '16:9'
+    resolution: 480p
+    frames_per_second: 24
+    segment_strategy: hybrid_loop
+    negative_prompt: blur, distort, low quality, flicker, jitter, warped anatomy, extra limbs, text, watermark
+    estimated_cost_per_video: 0.0
+    max_estimated_cost_usd: 5.0
+  worker_args:
+    width: 704
+    height: 480
+    fps: 24
+    seconds: 4
+    steps: 8
+    guidance_scale: 1.0
+    dtype: bfloat16
+    device: cuda
+    cpu_offload: false
+    seed: 42
+    negative_prompt: worst quality, blurry, jittery, distorted, flicker
+assembly:
+  final_dir_template: output/{story_id}
+  reuse_shots_across_languages: true
+budget:
+  target_cost_usd: 5.0
+  max_gpu_hours: 2.0
+  retry_slide_limit: 2
+  notes: Reuse the same clips for EN and TE. Reject weak stills before motion generation.
+quality_control:
+  inspect_source_stills_before_motion: true
+  inspect_contact_sheet_after_motion: true
+  validate_final_mp4: true
+  notes: Calm bedtime pacing is more important than aggressive motion.
