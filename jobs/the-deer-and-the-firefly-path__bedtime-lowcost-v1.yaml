@@ -1,7 +1,7 @@
 schema_version: 1
 job_id: the-deer-and-the-firefly-path__bedtime-lowcost-v1
 manifest_path: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
-created_at: '2026-06-01T12:55:18+00:00'
+created_at: '2026-06-03T08:51:33+00:00'
 story:
   path: stories/the-deer-and-the-firefly-path.yaml
   story_id: the-deer-and-the-firefly-path
@@ -36,23 +36,23 @@ source_images:
 animation:
   provider: local
   backend: ltx-diffusers
-  model: Lightricks/LTX-Video
+  model: Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25
   generate_script: scripts/generate_ltx_shots.py
   worker_args:
     width: 704
     height: 480
     fps: 24
     seconds: 4
-    steps: 8
+    steps: 6
     guidance_scale: 1.0
-    dtype: bfloat16
+    dtype: float16
     device: cuda
-    cpu_offload: false
+    cpu_offload: true
     seed: 42
     negative_prompt: worst quality, blurry, jittery, distorted, flicker
   merged_defaults:
     provider: local
-    model: Lightricks/LTX-Video
+    model: Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25
     shot_duration_seconds: 4
     shots_per_slide: 1
     negative_prompt: blur, distort, low quality, flicker, jitter, warped anatomy, extra limbs, text, watermark
@@ -77,12 +77,11 @@ assembly:
 outputs:
   finals:
     en:
-      path: output/the-deer-and-the-firefly-path/final_the-deer-and-the-firefly-path_en_animated_lightricks-ltx-video_image_480p_4s_1shots.mp4
+      path: output/the-deer-and-the-firefly-path/final_the-deer-and-the-firefly-path_en_animated_lightricks-ltx-video-2b-0-9-6-distilled-04-25_image_480p_4s_1shots.mp4
       status: missing
       validation_status: pending
-      assembled_at: '2026-06-01T12:55:19+00:00'
     te:
-      path: output/the-deer-and-the-firefly-path/final_the-deer-and-the-firefly-path_te_animated_lightricks-ltx-video_image_480p_4s_1shots.mp4
+      path: output/the-deer-and-the-firefly-path/final_the-deer-and-the-firefly-path_te_animated_lightricks-ltx-video-2b-0-9-6-distilled-04-25_image_480p_4s_1shots.mp4
       status: missing
       validation_status: pending
 budget:
@@ -97,7 +96,7 @@ quality_control:
   notes: Calm bedtime pacing is more important than aggressive motion.
 commands:
   generate_clips: python orchestration/render_job.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
-  generate_clips_raw: python scripts/generate_ltx_shots.py stories/the-deer-and-the-firefly-path.yaml --image-dir output/the-deer-and-the-firefly-path --output-dir selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips --model Lightricks/LTX-Video --dtype bfloat16 --device cuda --width 704 --height 480 --fps 24 --seconds 4 --steps 8 --guidance-scale 1.0 --negative-prompt 'worst quality, blurry, jittery, distorted, flicker' --seed 42
+  generate_clips_raw: python scripts/generate_ltx_shots.py stories/the-deer-and-the-firefly-path.yaml --image-dir output/the-deer-and-the-firefly-path --output-dir selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips --model Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25 --dtype float16 --device cuda --width 704 --height 480 --fps 24 --seconds 4 --steps 6 --guidance-scale 1.0 --negative-prompt 'worst quality, blurry, jittery, distorted, flicker' --seed 42 --cpu-offload
   dry_run_en: python generate_story.py stories/the-deer-and-the-firefly-path.yaml --job-manifest jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml --lang en --dry-run
   assemble_job: python orchestration/assemble_job.py jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml
   assemble:
@@ -345,22 +344,6 @@ slides:
       path: selfhosted/the-deer-and-the-firefly-path/bedtime-lowcost-v1/clips/slide10_shot01.mp4
       status: missing
       qc: pending
-run_history:
-- stage: assemble_job
-  finished_at: '2026-06-01T12:55:19+00:00'
-  languages:
-  - en
-  dry_run: true
-  validate: false
-- stage: render_job_status_only
-  finished_at: '2026-06-01T12:55:35+00:00'
-  selected_slides: all
-- stage: render_job_status_only
-  finished_at: '2026-06-01T13:17:06+00:00'
-  selected_slides: all
-- stage: render_job_status_only
-  finished_at: '2026-06-01T13:19:30+00:00'
-  selected_slides: all
 storage:
   provider: hf-dataset
   repo_id: rajendarmuddasani/video-generation-jobs
@@ -368,4 +351,4 @@ storage:
   input_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/input
   state_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/state
   results_prefix: jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1/results
-  published_at: '2026-06-02T17:14:54+00:00'
+  published_at: '2026-06-03T08:51:43+00:00'

@@ -19,12 +19,12 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 
 Recommended model choice:
 
-- Primary budget path: `Lightricks/LTX-Video` via Diffusers `LTXImageToVideoPipeline`
+- Primary budget path: `Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25` via Diffusers `LTXImageToVideoPipeline`
 - Fallback higher-VRAM path: `THUDM/CogVideoX-5b-I2V`
 
 Why this choice:
 
-- Hugging Face Diffusers documents LTX image-to-video and notes about `~10GB` VRAM for the base LTX path.
+- The 2B distilled LTX variant is the practical first choice for Kaggle-class or other low-VRAM GPU workers.
 - Diffusers documents quantized CogVideoX 5B around `~16GB` VRAM, which is less budget-friendly.
 - For a hard `$5` recipe, LTX is the safer first target.
 
@@ -49,9 +49,12 @@ python scripts/generate_ltx_shots.py \
   stories/the-deer-and-the-firefly-path.yaml \
   --image-dir output/the-deer-and-the-firefly-path \
   --output-dir selfhosted/the-deer-and-the-firefly-path/clips \
+  --model Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25 \
   --seconds 4 \
   --fps 24 \
-  --steps 8 \
+  --steps 6 \
+  --dtype float16 \
+  --cpu-offload \
   --guidance-scale 1.0
 ```
 
@@ -119,7 +122,7 @@ Use this exact recipe for the first self-hosted test:
 - `1` clip per slide
 - `4` seconds per clip
 - `24` fps output clips
-- `8` denoising steps on LTX
+- `6` denoising steps on the 2B distilled LTX model
 - `480x704` or similar low-cost resolution
 - Reuse the same `10` clips for English and Telugu
 - Reject bad stills before generating motion clips

@@ -14,12 +14,12 @@ source_images:
 animation:
   provider: local
   backend: ltx-diffusers
-  model: Lightricks/LTX-Video
+  model: Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25
   generate_script: scripts/generate_ltx_shots.py
   output_dir_template: selfhosted/{story_id}/{profile_id}/clips
   defaults_override:
     provider: local
-    model: Lightricks/LTX-Video
+    model: Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25
     model_input: image
     shot_duration_seconds: 4
     shots_per_slide: 1
@@ -35,11 +35,11 @@ animation:
     height: 480
     fps: 24
     seconds: 4
-    steps: 8
+    steps: 6
     guidance_scale: 1.0
-    dtype: bfloat16
+    dtype: float16
     device: cuda
-    cpu_offload: false
+    cpu_offload: true
     seed: 42
     negative_prompt: worst quality, blurry, jittery, distorted, flicker
 assembly:
