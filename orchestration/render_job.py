@@ -173,8 +173,51 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
 
     dtype = parse_torch_dtype(resolved_dtype_name)
     pipe = LTXImageToVideoPipeline.from_pretrained(model_name, torch_dtype=dtype)
+    if hasattr(pipe, "vae"):
+        if hasattr(pipe.vae, "enable_tiling"):
+            pipe.vae.enable_tiling()
+        if hasattr(pipe.vae, "enable_slicing"):
+            pipe.vae.enable_slicing()
     if cpu_offload:
-        pipe.enable_model_cpu_offload()
+        applied_group_offload = False
+        try:
+            from diffusers.hooks import apply_group_offloading
+
+            onload_device = torch.device(device)
+            offload_device = torch.device("cpu")
+
+            if hasattr(pipe, "transformer") and hasattr(pipe.transformer, "enable_group_offload"):
+                pipe.transformer.enable_group_offload(
+                    onload_device=onload_device,
+                    offload_device=offload_device,
+                    offload_type="leaf_level",
+                    use_stream=True,
+                )
+                applied_group_offload = True
+            if hasattr(pipe, "text_encoder"):
+                apply_group_offloading(
+                    pipe.text_encoder,
+                    onload_device=onload_device,
+                    offload_device=offload_device,
+                    offload_type="block_level",
+                    num_blocks_per_group=2,
+                    use_stream=True,
+                )
+                applied_group_offload = True
+            if hasattr(pipe, "vae"):
+                apply_group_offloading(
+                    pipe.vae,
+                    onload_device=onload_device,
+                    offload_device=offload_device,
+                    offload_type="leaf_level",
+                    use_stream=True,
+                )
+                applied_group_offload = True
+        except Exception:
+            applied_group_offload = False
+
+        if not applied_group_offload:
+            pipe.enable_model_cpu_offload()
         return pipe, "cpu"
     pipe = pipe.to(device)
     return pipe, device

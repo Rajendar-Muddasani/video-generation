@@ -19,12 +19,13 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 
 Recommended model choice:
 
-- Primary budget path: `Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25` via Diffusers `LTXImageToVideoPipeline`
+- Primary budget path: `Lightricks/LTX-Video` via Diffusers `LTXImageToVideoPipeline`
 - Fallback higher-VRAM path: `THUDM/CogVideoX-5b-I2V`
 
 Why this choice:
 
-- The 2B distilled LTX variant is the practical first choice for Kaggle-class or other low-VRAM GPU workers.
+- The generic `Lightricks/LTX-Video` Diffusers repo is the safe target for this code path because it includes a packaged `model_index.json` pipeline layout.
+- Some newer 2B checkpoint repos are raw checkpoint drops without Diffusers packaging, so `from_pretrained()` cannot load them directly.
 - Diffusers documents quantized CogVideoX 5B around `~16GB` VRAM, which is less budget-friendly.
 - For a hard `$5` recipe, LTX is the safer first target.
 
@@ -49,7 +50,7 @@ python scripts/generate_ltx_shots.py \
   stories/the-deer-and-the-firefly-path.yaml \
   --image-dir output/the-deer-and-the-firefly-path \
   --output-dir selfhosted/the-deer-and-the-firefly-path/clips \
-  --model Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25 \
+  --model Lightricks/LTX-Video \
   --seconds 4 \
   --fps 24 \
   --steps 6 \

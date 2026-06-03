@@ -14,12 +14,12 @@ source_images:
 animation:
   provider: local
   backend: ltx-diffusers
-  model: Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25
+  model: Lightricks/LTX-Video
   generate_script: scripts/generate_ltx_shots.py
   output_dir_template: selfhosted/{story_id}/{profile_id}/clips
   defaults_override:
     provider: local
-    model: Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25
+    model: Lightricks/LTX-Video
     model_input: image
     shot_duration_seconds: 4
     shots_per_slide: 1
