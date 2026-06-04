@@ -186,6 +186,7 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
                 gpu_index = int(device.split(":", 1)[1])
             total_vram_gib = torch.cuda.get_device_properties(gpu_index).total_memory / (1024 ** 3)
             default_gpu_budget_gib = max(4, min(7, int(total_vram_gib // 2)))
+            kaggle_runtime = Path("/kaggle/working").exists()
             offload_folder = "/kaggle/working/ltx-offload" if Path("/kaggle/working").exists() else str(REPO_ROOT / ".ltx-offload")
 
             alloc_conf = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "")
@@ -194,10 +195,17 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
                     item for item in [alloc_conf, "expandable_segments:True"] if item
                 )
 
-            for label, gpu_budget_gib, device_map in [
+            plan_specs = [
                 ("balanced", default_gpu_budget_gib, "balanced"),
                 ("sequential", max(3, default_gpu_budget_gib - 2), "sequential"),
-            ]:
+            ]
+            if kaggle_runtime:
+                plan_specs = [
+                    ("kaggle-sequential", max(3, default_gpu_budget_gib - 3), "sequential"),
+                    ("kaggle-balanced", max(4, default_gpu_budget_gib - 1), "balanced"),
+                ]
+
+            for label, gpu_budget_gib, device_map in plan_specs:
                 load_plans.append((
                     label,
                     {
