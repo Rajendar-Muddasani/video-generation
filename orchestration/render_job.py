@@ -172,13 +172,33 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
             resolved_dtype_name = "float16"
 
     dtype = parse_torch_dtype(resolved_dtype_name)
-    pipe = LTXImageToVideoPipeline.from_pretrained(model_name, torch_dtype=dtype)
+    load_kwargs = {
+        "torch_dtype": dtype,
+    }
+    if cpu_offload:
+        load_kwargs["low_cpu_mem_usage"] = True
+        if device.startswith("cuda") and torch.cuda.is_available():
+            gpu_index = 0
+            if ":" in device:
+                gpu_index = int(device.split(":", 1)[1])
+            total_vram_gib = torch.cuda.get_device_properties(gpu_index).total_memory / (1024 ** 3)
+            gpu_budget_gib = max(1, int(total_vram_gib - 1))
+            load_kwargs["device_map"] = "balanced"
+            load_kwargs["max_memory"] = {
+                gpu_index: f"{gpu_budget_gib}GiB",
+                "cpu": "28GiB",
+            }
+            load_kwargs["offload_state_dict"] = True
+
+    pipe = LTXImageToVideoPipeline.from_pretrained(model_name, **load_kwargs)
     if hasattr(pipe, "vae"):
         if hasattr(pipe.vae, "enable_tiling"):
             pipe.vae.enable_tiling()
         if hasattr(pipe.vae, "enable_slicing"):
             pipe.vae.enable_slicing()
     if cpu_offload:
+        if "device_map" in load_kwargs:
+            return pipe, "cpu"
         applied_group_offload = False
         try:
             from diffusers.hooks import apply_group_offloading
