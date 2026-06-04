@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -182,14 +183,29 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
             if ":" in device:
                 gpu_index = int(device.split(":", 1)[1])
             total_vram_gib = torch.cuda.get_device_properties(gpu_index).total_memory / (1024 ** 3)
-            gpu_budget_gib = max(1, int(total_vram_gib - 1))
-            load_kwargs["device_map"] = "balanced"
+            gpu_budget_gib = max(4, min(8, int(total_vram_gib // 2)))
+            load_kwargs["device_map"] = {
+                "text_encoder": "cpu",
+                "vae": "cpu",
+                "transformer": gpu_index,
+            }
             load_kwargs["max_memory"] = {
                 gpu_index: f"{gpu_budget_gib}GiB",
                 "cpu": "28GiB",
             }
             load_kwargs["offload_state_dict"] = True
+            load_kwargs["offload_folder"] = "/kaggle/working/ltx-offload" if Path("/kaggle/working").exists() else None
+            alloc_conf = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "")
+            if "expandable_segments:True" not in alloc_conf:
+                os.environ["PYTORCH_CUDA_ALLOC_CONF"] = ",".join(
+                    item for item in [alloc_conf, "expandable_segments:True"] if item
+                )
 
+    if load_kwargs.get("offload_folder") is None:
+        load_kwargs.pop("offload_folder", None)
+
+    if load_kwargs.get("device_map"):
+        print(f"[info] LTX load policy: device_map={load_kwargs['device_map']} max_memory={load_kwargs['max_memory']}")
     pipe = LTXImageToVideoPipeline.from_pretrained(model_name, **load_kwargs)
     if hasattr(pipe, "vae"):
         if hasattr(pipe.vae, "enable_tiling"):
