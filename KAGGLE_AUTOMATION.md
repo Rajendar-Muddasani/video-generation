@@ -99,7 +99,7 @@ Then publish the manifest plus source stills:
 ```bash
 python orchestration/publish_job_bundle.py \
   jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml \
-  --repo-id yourname/bedtime-story-jobs \
+  --repo-id rajendarmuddasani/video-generation-jobs \
   --private \
   --force
 ```
@@ -153,11 +153,13 @@ from kaggle_secrets import UserSecretsClient
 user_secrets = UserSecretsClient()
 os.environ["HF_TOKEN"] = user_secrets.get_secret("HF_TOKEN")
 
-REPO_ID = "yourname/bedtime-story-jobs"
+REPO_ID = "rajendarmuddasani/video-generation-jobs"
 JOB_ID = "the-deer-and-the-firefly-path__bedtime-lowcost-v1"
 ```
 
 Use the exact same `REPO_ID` that succeeded in Step 2. Do not switch namespaces between local publish and Kaggle.
+
+If the error URL contains `yourname/bedtime-story-jobs`, you are still running an older placeholder value instead of the real dataset repo id.
 
 Cell 2: install the small bootstrap dependencies.
 
@@ -318,7 +320,7 @@ Example:
 ```bash
 python orchestration/publish_job_bundle.py \
   jobs/the-deer-and-the-firefly-path__bedtime-lowcost-v1.yaml \
-  --repo-id yourname/bedtime-story-jobs \
+  --repo-id rajendarmuddasani/video-generation-jobs \
   --slides 3,7-8 \
   --force
 ```
@@ -327,7 +329,7 @@ And on Kaggle:
 
 ```bash
 python job-input/orchestration/kaggle_worker.py \
-  --repo-id yourname/bedtime-story-jobs \
+  --repo-id rajendarmuddasani/video-generation-jobs \
   --job-id the-deer-and-the-firefly-path__bedtime-lowcost-v1 \
   --bundle-dir job-input \
   --slides 3,7-8 \
