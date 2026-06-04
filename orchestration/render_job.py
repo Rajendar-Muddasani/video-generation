@@ -173,47 +173,78 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
             resolved_dtype_name = "float16"
 
     dtype = parse_torch_dtype(resolved_dtype_name)
-    load_kwargs = {
+    load_plans: list[tuple[str, dict]] = []
+    base_kwargs = {
         "torch_dtype": dtype,
     }
+
     if cpu_offload:
-        load_kwargs["low_cpu_mem_usage"] = True
+        base_kwargs["low_cpu_mem_usage"] = True
         if device.startswith("cuda") and torch.cuda.is_available():
             gpu_index = 0
             if ":" in device:
                 gpu_index = int(device.split(":", 1)[1])
             total_vram_gib = torch.cuda.get_device_properties(gpu_index).total_memory / (1024 ** 3)
-            gpu_budget_gib = max(4, min(8, int(total_vram_gib // 2)))
-            load_kwargs["device_map"] = {
-                "text_encoder": "cpu",
-                "vae": "cpu",
-                "transformer": gpu_index,
-            }
-            load_kwargs["max_memory"] = {
-                gpu_index: f"{gpu_budget_gib}GiB",
-                "cpu": "28GiB",
-            }
-            load_kwargs["offload_state_dict"] = True
-            load_kwargs["offload_folder"] = "/kaggle/working/ltx-offload" if Path("/kaggle/working").exists() else None
+            default_gpu_budget_gib = max(4, min(7, int(total_vram_gib // 2)))
+            offload_folder = "/kaggle/working/ltx-offload" if Path("/kaggle/working").exists() else str(REPO_ROOT / ".ltx-offload")
+
             alloc_conf = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "")
             if "expandable_segments:True" not in alloc_conf:
                 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = ",".join(
                     item for item in [alloc_conf, "expandable_segments:True"] if item
                 )
 
-    if load_kwargs.get("offload_folder") is None:
-        load_kwargs.pop("offload_folder", None)
+            for label, gpu_budget_gib, device_map in [
+                ("balanced", default_gpu_budget_gib, "balanced"),
+                ("sequential", max(3, default_gpu_budget_gib - 2), "sequential"),
+            ]:
+                load_plans.append((
+                    label,
+                    {
+                        **base_kwargs,
+                        "device_map": device_map,
+                        "max_memory": {
+                            gpu_index: f"{gpu_budget_gib}GiB",
+                            "cpu": "28GiB",
+                        },
+                        "offload_state_dict": True,
+                        "offload_folder": offload_folder,
+                    },
+                ))
+        else:
+            load_plans.append(("cpu-offload", dict(base_kwargs)))
+    else:
+        load_plans.append(("default", dict(base_kwargs)))
 
-    if load_kwargs.get("device_map"):
-        print(f"[info] LTX load policy: device_map={load_kwargs['device_map']} max_memory={load_kwargs['max_memory']}")
-    pipe = LTXImageToVideoPipeline.from_pretrained(model_name, **load_kwargs)
+    pipe = None
+    last_exc: Exception | None = None
+    for label, load_kwargs in load_plans:
+        try:
+            if load_kwargs.get("device_map"):
+                print(f"[info] LTX load policy ({label}): device_map={load_kwargs['device_map']} max_memory={load_kwargs['max_memory']}")
+            pipe = LTXImageToVideoPipeline.from_pretrained(model_name, **load_kwargs)
+            break
+        except Exception as exc:
+            last_exc = exc
+            message = str(exc).lower()
+            is_oom = isinstance(exc, torch.OutOfMemoryError) or "out of memory" in message
+            if not is_oom:
+                raise
+            print(f"[warn] LTX load policy '{label}' failed with OOM; retrying with a stricter placement")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+    if pipe is None:
+        assert last_exc is not None
+        raise last_exc
+
     if hasattr(pipe, "vae"):
         if hasattr(pipe.vae, "enable_tiling"):
             pipe.vae.enable_tiling()
         if hasattr(pipe.vae, "enable_slicing"):
             pipe.vae.enable_slicing()
     if cpu_offload:
-        if "device_map" in load_kwargs:
+        if any("device_map" in kwargs for _, kwargs in load_plans):
             return pipe, "cpu"
         applied_group_offload = False
         try:
