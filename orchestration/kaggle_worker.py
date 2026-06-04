@@ -76,7 +76,13 @@ def maybe_install_deps(workdir: Path) -> None:
     for rel_path in ("requirements-orchestration.txt", "requirements-selfhosted.txt"):
         req_path = workdir / rel_path
         if req_path.exists():
-            subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", str(req_path)], check=True)
+            print(f"[setup] installing dependencies from {req_path.name}")
+            try:
+                subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", str(req_path)], check=True)
+            except subprocess.CalledProcessError as exc:
+                raise SystemExit(
+                    f"❌  Failed to install dependencies from {req_path.name}. See pip output above."
+                ) from exc
 
 
 def running_on_kaggle() -> bool:
@@ -277,6 +283,7 @@ def main() -> None:
             upload_results(args.repo_id, remote, token, workdir, manifest_rel, manifest)
 
     if exit_code != 0:
+        print(f"[error] render_job.py exited with code {exit_code}. Scroll up to the first traceback above this line.")
         raise SystemExit(exit_code)
     if args.skip_upload:
         print("[done] upload skipped; manifest state remains in the local bundle/outbox")

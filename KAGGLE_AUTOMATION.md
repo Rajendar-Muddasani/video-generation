@@ -210,20 +210,26 @@ Cell 4: run the bundled worker.
 import subprocess
 import sys
 
-subprocess.run(
-  [
-    sys.executable,
-    "job-input/orchestration/kaggle_worker.py",
-    "--repo-id",
-    REPO_ID,
-    "--job-id",
-    JOB_ID,
-    "--bundle-dir",
-    "job-input",
-    "--install-deps",
-  ],
-  check=True,
-)
+command = [
+  sys.executable,
+  "-u",
+  "job-input/orchestration/kaggle_worker.py",
+  "--repo-id",
+  REPO_ID,
+  "--job-id",
+  JOB_ID,
+  "--bundle-dir",
+  "job-input",
+  "--install-deps",
+]
+
+result = subprocess.run(command, check=False)
+if result.returncode != 0:
+  raise SystemExit(
+    f"Kaggle worker failed with exit code {result.returncode}. "
+    "Scroll up to the first traceback or pip error in the worker logs above; "
+    "the outer notebook wrapper is not the root cause."
+  )
 ```
 
 If you are retrying an older already-published bundle on Kaggle, the quickest compatibility override is to append `"--dtype", "float16"` to that command. If the GPU still runs out of memory, try `"--cpu-offload"` or test only one slide first with `"--slides", "1"`.
@@ -258,9 +264,10 @@ if target.exists():
 
 shutil.copytree(source, target)
 
-subprocess.run(
+result = subprocess.run(
   [
     sys.executable,
+    "-u",
     "job-input/orchestration/kaggle_worker.py",
     "--repo-id",
     REPO_ID,
@@ -270,8 +277,15 @@ subprocess.run(
     "job-input",
     "--install-deps",
   ],
-  check=True,
+  check=False,
 )
+
+if result.returncode != 0:
+  raise SystemExit(
+    f"Kaggle worker failed with exit code {result.returncode}. "
+    "Scroll up to the first traceback or pip error in the worker logs above; "
+    "the outer notebook wrapper is not the root cause."
+  )
 ```
 
 ### 3D. What success looks like
