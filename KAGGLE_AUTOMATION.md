@@ -225,7 +225,7 @@ command = [
 
 result = subprocess.run(command, check=False)
 if result.returncode != 0:
-  raise SystemExit(
+  raise RuntimeError(
     f"Kaggle worker failed with exit code {result.returncode}. "
     "Scroll up to the first traceback or pip error in the worker logs above; "
     "the outer notebook wrapper is not the root cause."
@@ -281,7 +281,7 @@ result = subprocess.run(
 )
 
 if result.returncode != 0:
-  raise SystemExit(
+  raise RuntimeError(
     f"Kaggle worker failed with exit code {result.returncode}. "
     "Scroll up to the first traceback or pip error in the worker logs above; "
     "the outer notebook wrapper is not the root cause."
