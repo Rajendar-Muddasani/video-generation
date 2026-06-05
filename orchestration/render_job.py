@@ -377,7 +377,7 @@ def render_selected_shots(manifest_path: Path, manifest: dict, selected_slides: 
 
         print(f"[gen] {shot_tag} -> {repo_relative(clip_path)}")
         result = pipe(
-            image=load_image(source_path),
+            image=load_image(str(source_path)),
             prompt=shot.get("video_prompt", shot.get("motion_prompt", "")),
             negative_prompt=negative_prompt,
             width=width,
