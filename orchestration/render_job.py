@@ -201,20 +201,20 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
             ]
             if kaggle_runtime:
                 plan_specs = [
-                    ("kaggle-sequential", max(3, default_gpu_budget_gib - 3), "sequential"),
-                    ("kaggle-balanced", max(4, default_gpu_budget_gib - 1), "balanced"),
+                    ("kaggle-balanced", max(4, default_gpu_budget_gib - 2), "balanced"),
+                    ("kaggle-cpu", None, "cpu"),
                 ]
 
             for label, gpu_budget_gib, device_map in plan_specs:
+                max_memory = {"cpu": "28GiB"}
+                if gpu_budget_gib is not None:
+                    max_memory[gpu_index] = f"{gpu_budget_gib}GiB"
                 load_plans.append((
                     label,
                     {
                         **base_kwargs,
                         "device_map": device_map,
-                        "max_memory": {
-                            gpu_index: f"{gpu_budget_gib}GiB",
-                            "cpu": "28GiB",
-                        },
+                        "max_memory": max_memory,
                         "offload_state_dict": True,
                         "offload_folder": offload_folder,
                     },
@@ -226,15 +226,20 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
 
     pipe = None
     last_exc: Exception | None = None
+    selected_load_kwargs: dict | None = None
     for label, load_kwargs in load_plans:
         try:
             if load_kwargs.get("device_map"):
                 print(f"[info] LTX load policy ({label}): device_map={load_kwargs['device_map']} max_memory={load_kwargs['max_memory']}")
             pipe = LTXImageToVideoPipeline.from_pretrained(model_name, **load_kwargs)
+            selected_load_kwargs = load_kwargs
             break
         except Exception as exc:
             last_exc = exc
             message = str(exc).lower()
+            if isinstance(exc, NotImplementedError) and "supported strategies are:" in message:
+                print(f"[warn] LTX load policy '{label}' is not supported by the installed Diffusers runtime; trying the next policy")
+                continue
             is_oom = isinstance(exc, torch.OutOfMemoryError) or "out of memory" in message
             if not is_oom:
                 raise
@@ -252,8 +257,11 @@ def load_ltx_pipeline(model_name: str, dtype_name: str, device: str, cpu_offload
         if hasattr(pipe.vae, "enable_slicing"):
             pipe.vae.enable_slicing()
     if cpu_offload:
-        if any("device_map" in kwargs for _, kwargs in load_plans):
+        selected_device_map = selected_load_kwargs.get("device_map") if selected_load_kwargs else None
+        if selected_device_map in {"balanced", "sequential"}:
             return pipe, "cpu"
+        if selected_device_map == "cuda":
+            return pipe, device
         applied_group_offload = False
         try:
             from diffusers.hooks import apply_group_offloading
